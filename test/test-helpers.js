@@ -1,3 +1,5 @@
+const bcrypt = require('bcryptjs')
+
 function makeUsersArray() {
   return [
     {
@@ -230,8 +232,30 @@ function cleanTables(db) {
   )
 }
 
+//Sets the sequence value for the blogful user with id, 
+//and returns the next value in the sequence for that user -- which is 1.
+
+
+function seedUsers(db, users){
+  const preppedUsers = users.map(user => ({
+    ...user,
+    password:bcrypt.hashSync(user.password, 12)
+  }))
+return db.into('thingful_users').insert(preppedUsers)
+.then(()=>
+db.raw(
+  `SELECT setval('thingful_users_id_seq', ?)`,
+  [users[users.length - 1].id],
+))
+}
+
 function seedThingsTables(db, users, things, reviews=[]) {
-  return db
+  return db.transaction(async trx =>{
+    await seedUsers(trx, users)
+    await trx.into('thingful_things').insert(things)
+    await trx.raw(`SELECT setval('thingful_things_id_seq', ?)`,
+    [things[things.length - 1].id])
+  })
     .into('thingful_users')
     .insert(users)
     .then(() =>
@@ -245,9 +269,7 @@ function seedThingsTables(db, users, things, reviews=[]) {
 }
 
 function seedMaliciousThing(db, user, thing) {
-  return db
-    .into('thingful_users')
-    .insert([user])
+  return seedUsers(db, [user])
     .then(() =>
       db
         .into('thingful_things')
@@ -267,4 +289,5 @@ module.exports = {
   cleanTables,
   seedThingsTables,
   seedMaliciousThing,
+  seedUsers,
 }

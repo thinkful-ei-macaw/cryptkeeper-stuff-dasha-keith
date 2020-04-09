@@ -106,8 +106,10 @@ describe('Things Endpoints', function() {
     })
   })
 
-  describe.only(`GET /api/things/:thing_id`, () => {
+  describe(`GET /api/things/:thing_id`, () => {
     context(`Given no things`, () => {
+      beforeEach(()=>
+      helpers.seedUsers(db, testUsers))
       it(`responds with 404`, () => {
         const thingId = 123456
         return supertest(app)
@@ -172,6 +174,9 @@ describe('Things Endpoints', function() {
 
   describe(`GET /api/things/:thing_id/reviews`, () => {
     context(`Given no things`, () => {
+      beforeEach (()=>
+      helpers.seedUsers(db, testUsers)
+      )
       it(`responds with 404`, () => {
         const thingId = 123456
         return supertest(app)
